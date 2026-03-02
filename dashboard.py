@@ -33,9 +33,6 @@ def inject_kk91_styles() -> None:
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
-
         :root {
             --kk-midnight: #0C0B1E;
             --kk-panes: #1A172F;
@@ -49,26 +46,25 @@ def inject_kk91_styles() -> None:
             --kk-rose: #ED4A6D;
         }
 
-        html, body, [class*="css"] {
-            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        html, body, [class*="css"], [data-testid="stMarkdownContainer"], [data-testid="stText"] {
+            font-family: "Segoe UI", sans-serif;
         }
 
         .stApp {
             background:
-              radial-gradient(1200px 500px at -10% -10%, rgba(111, 76, 255, 0.20), transparent 60%),
-              radial-gradient(900px 400px at 110% 0%, rgba(102, 216, 255, 0.14), transparent 60%),
-              linear-gradient(165deg, #0B0A1A 0%, #0C0B1E 40%, #121029 100%);
+              radial-gradient(1100px 380px at 100% 0%, rgba(76, 102, 255, 0.16), transparent 58%),
+              linear-gradient(180deg, #0B0A1A 0%, #0C0B1E 55%, #111028 100%);
             color: var(--kk-white);
         }
 
         .block-container {
-            padding-top: 2.2rem;
+            padding-top: 1.9rem;
             padding-bottom: 2.2rem;
-            max-width: 1250px;
+            max-width: 1220px;
         }
 
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, rgba(26,23,47,0.97), rgba(19,17,36,0.97));
+            background: linear-gradient(180deg, rgba(26,23,47,0.98), rgba(21,19,40,0.98));
             border-right: 1px solid var(--kk-line);
         }
 
@@ -80,48 +76,54 @@ def inject_kk91_styles() -> None:
         [data-testid="stSidebar"] [data-baseweb="select"] > div {
             background: var(--kk-tooltip) !important;
             border: 1px solid var(--kk-line) !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
         }
 
         [data-testid="stSidebar"] [data-baseweb="select"] svg {
             fill: var(--kk-turquoise);
         }
 
+        [data-testid="stSidebar"] [data-baseweb="select"] > div:focus-within,
+        [data-testid="stSidebar"] [data-testid="stTextInput"] input:focus {
+            border-color: var(--kk-blue) !important;
+            box-shadow: 0 0 0 1px var(--kk-blue);
+        }
+
         .kk91-hero {
-            background: linear-gradient(145deg, rgba(26,23,47,0.94), rgba(34,32,55,0.94));
+            background: linear-gradient(180deg, rgba(26,23,47,0.96), rgba(31,29,52,0.93));
             border: 1px solid var(--kk-line);
-            border-radius: 18px;
-            padding: 1.25rem 1.4rem 1.35rem 1.4rem;
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.30);
-            margin-bottom: 0.9rem;
+            border-radius: 14px;
+            padding: 1.15rem 1.3rem 1.2rem 1.3rem;
+            box-shadow: 0 10px 18px rgba(0, 0, 0, 0.24);
+            margin-bottom: 0.75rem;
         }
 
         .kk91-badge {
             display: inline-block;
-            font-size: 0.72rem;
+            font-size: 0.70rem;
             letter-spacing: 0.14em;
             text-transform: uppercase;
             color: var(--kk-turquoise);
             background: rgba(76,102,255,0.20);
             border: 1px solid rgba(102,216,255,0.35);
             border-radius: 999px;
-            padding: 0.28rem 0.62rem;
-            margin-bottom: 0.7rem;
+            padding: 0.25rem 0.6rem;
+            margin-bottom: 0.62rem;
         }
 
         .kk91-hero h1 {
             margin: 0;
             color: var(--kk-white);
-            font-size: clamp(1.55rem, 2.4vw, 2.1rem);
-            font-weight: 700;
-            letter-spacing: 0.01em;
+            font-size: clamp(1.48rem, 2.2vw, 1.95rem);
+            font-weight: 600;
+            letter-spacing: 0.005em;
         }
 
         .kk91-hero p {
-            margin: 0.45rem 0 0 0;
+            margin: 0.38rem 0 0 0;
             color: var(--kk-dim);
-            font-size: 0.97rem;
-            line-height: 1.45;
+            font-size: 0.92rem;
+            line-height: 1.42;
             max-width: 66ch;
         }
 
@@ -142,11 +144,11 @@ def inject_kk91_styles() -> None:
 
         .kk91-metric {
             border: 1px solid var(--kk-line);
-            background: linear-gradient(160deg, rgba(26,23,47,0.96), rgba(34,32,55,0.94));
-            border-radius: 16px;
-            padding: 0.78rem 0.95rem 0.84rem 0.95rem;
+            background: linear-gradient(180deg, rgba(26,23,47,0.95), rgba(33,31,53,0.92));
+            border-radius: 13px;
+            padding: 0.72rem 0.9rem 0.78rem 0.9rem;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
-            min-height: 105px;
+            min-height: 98px;
         }
 
         .kk91-metric__label {
@@ -157,9 +159,9 @@ def inject_kk91_styles() -> None:
         }
 
         .kk91-metric__value {
-            color: var(--kk-white);
-            font-family: "JetBrains Mono", "Consolas", monospace;
-            font-size: 1.18rem;
+            color: var(--kk-turquoise);
+            font-family: "Consolas", "JetBrains Mono", monospace;
+            font-size: 1.12rem;
             font-weight: 600;
             line-height: 1.25;
             margin-bottom: 0.24rem;
@@ -175,11 +177,11 @@ def inject_kk91_styles() -> None:
         }
 
         .kk91-status {
-            margin: 0.75rem 0 0.55rem;
+            margin: 0.7rem 0 0.5rem;
             border: 1px solid var(--kk-line);
             border-left: 4px solid var(--kk-blue);
             background: rgba(26,23,47,0.84);
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 0.6rem 0.82rem;
             color: var(--kk-dim);
             font-size: 0.88rem;
@@ -191,7 +193,7 @@ def inject_kk91_styles() -> None:
         }
 
         .kk91-section {
-            margin: 1.2rem 0 0.42rem;
+            margin: 1.1rem 0 0.38rem;
             border-left: 4px solid var(--kk-purple);
             padding-left: 0.58rem;
         }
@@ -211,14 +213,14 @@ def inject_kk91_styles() -> None:
 
         [data-testid="stPlotlyChart"],
         [data-testid="stDataFrame"] {
-            background: linear-gradient(160deg, rgba(26,23,47,0.95), rgba(34,32,55,0.90));
+            background: linear-gradient(180deg, rgba(26,23,47,0.95), rgba(32,30,52,0.90));
             border: 1px solid var(--kk-line);
-            border-radius: 14px;
-            padding: 0.55rem;
+            border-radius: 12px;
+            padding: 0.5rem;
         }
 
         .stAlert {
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             border: 1px solid var(--kk-line) !important;
         }
         </style>
@@ -408,7 +410,7 @@ def style_plotly(fig, accent: str | None = None) -> None:
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font={"family": "Space Grotesk, Segoe UI, sans-serif", "color": KK91_COLORS["white"], "size": 13},
+        font={"family": "Segoe UI, sans-serif", "color": KK91_COLORS["white"], "size": 13},
         margin={"l": 8, "r": 8, "t": 42, "b": 8},
         legend={
             "bgcolor": "rgba(12,11,30,0.35)",
@@ -454,6 +456,38 @@ def style_plotly(fig, accent: str | None = None) -> None:
                     trace.marker.line.width = 1
 
 
+def style_df(df: pd.DataFrame) -> pd.io.formats.style.Styler:
+    return (
+        df.style.set_table_styles(
+            [
+                {
+                    "selector": "th",
+                    "props": [
+                        ("background-color", KK91_COLORS["tooltip"]),
+                        ("color", KK91_COLORS["white"]),
+                        ("border", f"1px solid {KK91_COLORS['line']}"),
+                        ("font-family", "Segoe UI"),
+                        ("font-size", "12px"),
+                        ("font-weight", "600"),
+                    ],
+                },
+                {
+                    "selector": "td",
+                    "props": [
+                        ("background-color", KK91_COLORS["panes"]),
+                        ("color", KK91_COLORS["white"]),
+                        ("border", f"1px solid {KK91_COLORS['line']}"),
+                        ("font-family", "Consolas"),
+                        ("font-size", "12px"),
+                    ],
+                },
+            ]
+        )
+        .set_properties(**{"text-align": "left"})
+        .hide(axis="index")
+    )
+
+
 def main() -> None:
     inject_kk91_styles()
 
@@ -462,7 +496,7 @@ def main() -> None:
         <div class="kk91-hero">
           <div class="kk91-badge">KK91 Energy Console</div>
           <h1>openDTU Tagesstatistik</h1>
-          <p>Live-Leistung, Tagesertrag und Wechselrichter-Details in einer Oberfläche im KK91-Look.</p>
+          <p>Live-Leistung, Tagesertrag und Wechselrichter-Details im gleichen visuellen System wie KK91.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -609,7 +643,7 @@ def main() -> None:
 
         preview = inverter_df.sort_values("day", ascending=False).copy()
         preview["day"] = preview["day"].dt.strftime("%Y-%m-%d")
-        st.dataframe(preview, use_container_width=True)
+        st.dataframe(style_df(preview), use_container_width=True)
 
     st.markdown(section_heading("String- und Phasenwerte (letzter Snapshot)"), unsafe_allow_html=True)
 
@@ -652,7 +686,7 @@ def main() -> None:
                     "yield_total_kwh": "Gesamtertrag (kWh)",
                 }
             )
-            st.dataframe(dc_view, use_container_width=True)
+            st.dataframe(style_df(dc_view), use_container_width=True)
 
         if not ac_phases_df.empty:
             ac_phases_df = ac_phases_df.copy()
@@ -680,12 +714,12 @@ def main() -> None:
                     "reactive_power_var": "Blindleistung (var)",
                 }
             )
-            st.dataframe(ac_view, use_container_width=True)
+            st.dataframe(style_df(ac_view), use_container_width=True)
 
     table_df = totals_df.copy().sort_values("day", ascending=False)
     table_df["day"] = table_df["day"].dt.strftime("%Y-%m-%d")
     st.markdown(section_heading("Gesamtdaten"), unsafe_allow_html=True)
-    st.dataframe(table_df, use_container_width=True)
+    st.dataframe(style_df(table_df), use_container_width=True)
 
 
 if __name__ == "__main__":
