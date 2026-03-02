@@ -8,7 +8,12 @@ Das Repository heißt `Opensolar`, der Inhalt ist ein openDTU-Statistiktool.
 
 - openDTU Live-Daten abrufen und als Snapshot speichern
 - Historie in SQLite (`data/opendtu_stats.db`)
-- Dashboard im KK91-Design mit Tabs (Uebersicht, Wechselrichter, Snapshot, Daten)
+- Dashboard im KK91-Design mit klaren Bereichen:
+  - Gesamtanlage
+  - Wechselrichter (Alle)
+  - Wechselrichter (Einzeln)
+  - String/Phase Snapshot
+  - Rohdaten
 - Automatischer Start und Catch-up nach Neustart auf macOS und Linux
 - ZimaOS Deployment per Docker Compose
 - Home-Assistant-Verknüpfung per MQTT Auto-Discovery (optional)
