@@ -1,35 +1,78 @@
-# openDTU Tagesstatistik
+# OpenSolar (openDTU Statistiktool)
 
-Dieses Tool holt täglich Daten von deiner openDTU (`/api/livedata/status`), speichert sie in SQLite und zeigt sie als Dashboard mit Grafiken.
+Dieses Projekt holt Daten von deiner openDTU (`/api/livedata/status`), speichert sie in SQLite und zeigt sie in einem Streamlit-Dashboard.
 
-Gespeicherte Kennzahlen:
+Das Repository heißt `Opensolar`, der Inhalt ist ein openDTU-Statistiktool.
+
+## Funktionen
+
+- openDTU Live-Daten abrufen und als Snapshot speichern
+- Historie in SQLite (`data/opendtu_stats.db`)
+- Dashboard mit Verlaufsgrafiken
+- Automatischer Start und Catch-up nach Neustart auf macOS und Linux
+
+Erfasste Kennzahlen:
+
 - Gesamtertrag heute (`YieldDay`)
 - Gesamtertrag gesamt (`YieldTotal`)
 - AC-Leistung (`Power`)
 - DC-Leistung (`Power DC`, aggregiert)
 - Temperatur (Durchschnitt über Inverter)
 - Wirkungsgrad (Durchschnitt über Inverter)
-- pro DC-String (String 1-4): Leistung, Spannung, Strom, Tagesertrag, Gesamtertrag
-- pro AC-Phase (Phase 1): Leistung, Spannung, Strom, Frequenz, Leistungsfaktor, Blindleistung
-- zusätzlich pro Wechselrichter eigene Tages-/Gesamtwerte
+- Pro DC-String (String 1-4): Leistung, Spannung, Strom, Tagesertrag, Gesamtertrag
+- Pro AC-Phase (Phase 1): Leistung, Spannung, Strom, Frequenz, Leistungsfaktor, Blindleistung
 
-## 1) Installation
+## Voraussetzungen
+
+- Python 3.10+ (empfohlen)
+- openDTU im Netzwerk erreichbar
+- Betriebssystem: macOS oder Linux
+
+## Schnellstart (5 Minuten)
+
+1. Projekt klonen und Abhängigkeiten installieren:
 
 ```bash
-cd "/pfad/zu/deinem/projekt"
+git clone https://github.com/Krakow91/Opensolar.git
+cd Opensolar
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2) Ersten Snapshot speichern
+2. Optional Konfiguration anlegen:
+
+```bash
+cp .env.example .env
+```
+
+Danach `.env` bei Bedarf anpassen (Basis-URL, Login, TLS).
+
+3. Erste Daten abholen:
 
 ```bash
 source .venv/bin/activate
 python collect.py
 ```
 
-Optional mit Login:
+4. Dashboard starten:
+
+```bash
+source .venv/bin/activate
+streamlit run dashboard.py
+```
+
+5. Im Browser öffnen: `http://localhost:8501`
+
+## Manuelle Nutzung
+
+Collector manuell ausführen:
+
+```bash
+python collect.py
+```
+
+Mit expliziten Parametern:
 
 ```bash
 python collect.py \
@@ -38,116 +81,102 @@ python collect.py \
   --password "dein-passwort"
 ```
 
-Die Daten landen standardmäßig in `data/opendtu_stats.db`.
-Standardmäßig wird zuerst `http://192.168.178.73` genutzt und bei Bedarf automatisch auf
-`http://OpenDTU-FAE538`, `http://OpenDTU-FAE538.local` und `http://192.168.4.1` (AP-Modus) gewechselt.
-
-## 3) Dashboard starten
+Hilfeseite:
 
 ```bash
-source .venv/bin/activate
-streamlit run dashboard.py
+python collect.py --help
 ```
 
-Dann im Browser: `http://localhost:8501`
+## Konfiguration über Umgebungsvariablen
 
-Optional Dashboard-Autostart nach Login/Neustart:
+Du kannst `collect.py` über `.env`/Environment steuern:
 
-macOS (`launchd`):
+- `OPENDTU_BASE_URL` (Default: `http://192.168.178.73`)
+- `OPENDTU_FALLBACK_URLS` (CSV-Liste mit Fallback-Hosts)
+- `OPENDTU_DB_PATH` (Default: `data/opendtu_stats.db`)
+- `OPENDTU_USERNAME`
+- `OPENDTU_PASSWORD`
+- `OPENDTU_VERIFY_TLS` (`true`/`false`)
+- `OPENDTU_TIMEOUT` (Sekunden)
+
+## Automatischer Betrieb
+
+### Dashboard beim Login starten
+
+macOS:
 
 ```bash
 ./install_dashboard_launchd.sh
-```
-
-Status prüfen:
-
-```bash
 launchctl print "gui/$(id -u)/de.krakow.opendtu.dashboard" | head -n 40
 ```
 
-Linux (`systemd --user`):
+Linux:
 
 ```bash
 ./install_dashboard_systemd.sh
-```
-
-Status prüfen:
-
-```bash
 systemctl --user status de.krakow.opendtu.dashboard.service --no-pager
 ```
 
-Dashboard-Logs (beide Plattformen):
+### Tägliches Sammeln per Cron
 
-```bash
-tail -f "./data/dashboard.log"
-tail -f "./data/dashboard-error.log"
-```
-
-## 4) Täglich automatisch ausführen (Cron, macOS/Linux)
-
-Beispiel: jeden Tag um **20:00**
+Beispiel: täglich um 20:00 Uhr:
 
 ```bash
 crontab -e
 ```
 
-Eintrag ergänzen:
+Cron-Eintrag:
 
 ```cron
-0 20 * * * cd "/pfad/zu/deinem/projekt" && "/pfad/zu/deinem/projekt/.venv/bin/python" collect.py >> "/pfad/zu/deinem/projekt/data/collector.log" 2>&1
+0 20 * * * cd "/pfad/zu/Opensolar" && "/pfad/zu/Opensolar/.venv/bin/python" collect.py >> "/pfad/zu/Opensolar/data/collector.log" 2>&1
 ```
 
-Wenn du Login brauchst, hänge `--username` und `--password` an.
-Fallback-Adressen kannst du über `--fallback-urls` oder `OPENDTU_FALLBACK_URLS` anpassen.
+### Catch-up nach Neustart (verpasste Läufe nachholen)
 
-## 5) Nachholen nach Neustart (macOS/Linux)
+Der Catch-up-Job läuft stündlich und sammelt nur, wenn der letzte erfolgreiche Lauf älter als 26 Stunden ist.
 
-Zusätzlich ist ein Hintergrund-Job sinnvoll, damit ein verpasster/falscher Abruf nachgeholt wird.
-Er startet beim Login/Neustart und prüft dann stündlich:
-- nur wenn der letzte erfolgreiche Run aelter als 26 Stunden ist, wird neu abgefragt
-- sonst wird sauber uebersprungen
-
-macOS (`launchd`) einmalig installieren:
+macOS:
 
 ```bash
 ./install_catchup_launchd.sh
-```
-
-Status prüfen:
-
-```bash
 launchctl print "gui/$(id -u)/de.krakow.opendtu.catchup" | head -n 40
 ```
 
-Linux (`systemd --user`) einmalig installieren:
+Linux:
 
 ```bash
 ./install_catchup_systemd.sh
-```
-
-Status prüfen:
-
-```bash
 systemctl --user status de.krakow.opendtu.catchup.timer --no-pager
 systemctl --user list-timers de.krakow.opendtu.catchup.timer --no-pager
 ```
 
-Logs (beide Plattformen):
-
-```bash
-tail -f "./data/catchup.log"
-tail -f "./data/catchup-error.log"
-```
-
-Optional auf Linux, wenn Jobs auch ohne aktive Login-Session laufen sollen:
+Optional auf Linux (auch ohne aktive Login-Session laufen lassen):
 
 ```bash
 sudo loginctl enable-linger "$USER"
 ```
 
-## 6) Tipps
+## Logs
 
-- Wenn du mehrere Wechselrichter hast, zeigt das Dashboard pro Gerät eigene Werte.
-- Für genauere Kurven (tagsüber), kannst du zusätzlich öfter sammeln (z. B. stündlich). Für dein Ziel „1x täglich“ reicht der Cron oben.
-- Bei HTTPS mit self-signed Zertifikat kannst du `--no-verify-tls` nutzen.
+- Dashboard: `data/dashboard.log`, `data/dashboard-error.log`
+- Catch-up: `data/catchup.log`, `data/catchup-error.log`
+- Cron-Sammeln: `data/collector.log`
+
+Live-Ansicht:
+
+```bash
+tail -f data/dashboard.log
+tail -f data/catchup.log
+```
+
+## Häufige Probleme
+
+- openDTU nicht erreichbar:
+  - `--base-url` prüfen
+  - Fallback-URLs prüfen (`OPENDTU_FALLBACK_URLS`)
+  - Netzwerk/Firewall prüfen
+- Dashboard startet nicht:
+  - Virtuelle Umgebung aktivieren
+  - `pip install -r requirements.txt` erneut ausführen
+- Linux `systemctl --user` ohne Session:
+  - `sudo loginctl enable-linger "$USER"` setzen
