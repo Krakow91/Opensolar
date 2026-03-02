@@ -40,5 +40,29 @@ services:
     volumes:
       - opensolar_data:/app/data
 
+  homeassistant_bridge:
+    image: opensolar:latest
+    container_name: opensolar-ha-bridge
+    restart: unless-stopped
+    profiles: ["homeassistant"]
+    depends_on:
+      - dashboard
+    command: ["python", "-m", "opendtu_stats.ha_bridge"]
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      OPENDTU_DB_PATH: /app/data/opendtu_stats.db
+      HA_MQTT_HOST: ${HA_MQTT_HOST:-}
+      HA_MQTT_PORT: ${HA_MQTT_PORT:-1883}
+      HA_MQTT_USERNAME: ${HA_MQTT_USERNAME:-}
+      HA_MQTT_PASSWORD: ${HA_MQTT_PASSWORD:-}
+      HA_MQTT_CLIENT_ID: ${HA_MQTT_CLIENT_ID:-opensolar-ha-bridge}
+      HA_MQTT_BASE_TOPIC: ${HA_MQTT_BASE_TOPIC:-opensolar/opendtu}
+      HA_MQTT_DISCOVERY_PREFIX: ${HA_MQTT_DISCOVERY_PREFIX:-homeassistant}
+      HA_MQTT_DEVICE_NAME: ${HA_MQTT_DEVICE_NAME:-OpenSolar openDTU}
+      HA_PUBLISH_INTERVAL_SECONDS: ${HA_PUBLISH_INTERVAL_SECONDS:-30}
+      HA_MQTT_TLS: ${HA_MQTT_TLS:-false}
+    volumes:
+      - opensolar_data:/app/data
+
 volumes:
   opensolar_data:

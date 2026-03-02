@@ -14,7 +14,7 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY collect.py dashboard.py ./
+COPY collect.py dashboard.py ha_bridge.py ./
 COPY opendtu_stats ./opendtu_stats
 COPY docker ./docker
 

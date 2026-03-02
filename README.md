@@ -8,8 +8,10 @@ Das Repository heißt `Opensolar`, der Inhalt ist ein openDTU-Statistiktool.
 
 - openDTU Live-Daten abrufen und als Snapshot speichern
 - Historie in SQLite (`data/opendtu_stats.db`)
-- Dashboard mit Verlaufsgrafiken
+- Dashboard im KK91-Design mit Tabs (Uebersicht, Wechselrichter, Snapshot, Daten)
 - Automatischer Start und Catch-up nach Neustart auf macOS und Linux
+- ZimaOS Deployment per Docker Compose
+- Home-Assistant-Verknüpfung per MQTT Auto-Discovery (optional)
 
 Erfasste Kennzahlen:
 
@@ -113,6 +115,15 @@ docker compose -f docker-compose.zimaos.yml logs -f dashboard
 http://<zimaos-ip>:8501
 ```
 
+### Optional: Home Assistant Bridge direkt mitstarten
+
+1. In `.env` MQTT-Daten eintragen (mindestens `HA_MQTT_HOST`).
+2. Dann mit Home-Assistant-Profil starten:
+
+```bash
+docker compose -f docker-compose.zimaos.yml --profile homeassistant up -d --build
+```
+
 ### Update auf ZimaOS
 
 ```bash
@@ -120,6 +131,44 @@ cd Opensolar
 git pull
 docker compose -f docker-compose.zimaos.yml up -d --build
 ```
+
+## Home Assistant Verknüpfung (MQTT Auto-Discovery)
+
+Die Bridge veröffentlicht den letzten openDTU-Stand automatisch als MQTT-Sensoren.
+In Home Assistant erscheinen die Entitäten automatisch, wenn MQTT eingerichtet ist.
+
+1. In Home Assistant die MQTT-Integration aktivieren.
+2. In `Opensolar/.env` setzen:
+
+```bash
+HA_MQTT_HOST=<ip-oder-host-vom-mqtt-broker>
+HA_MQTT_PORT=1883
+HA_MQTT_USERNAME=<optional>
+HA_MQTT_PASSWORD=<optional>
+HA_MQTT_DISCOVERY_PREFIX=homeassistant
+HA_MQTT_BASE_TOPIC=opensolar/opendtu
+```
+
+3. Bridge starten:
+
+```bash
+cd Opensolar
+docker compose -f docker-compose.zimaos.yml --profile homeassistant up -d --build
+```
+
+4. Logs prüfen:
+
+```bash
+docker compose -f docker-compose.zimaos.yml logs -f homeassistant_bridge
+```
+
+Danach findest du in Home Assistant u. a.:
+- Gesamtleistung
+- DC-Leistung
+- Tagesertrag
+- Gesamtertrag
+- Temperatur/Wirkungsgrad
+- Wechselrichter-spezifische Sensoren
 
 ## Manuelle Nutzung
 

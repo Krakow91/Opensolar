@@ -223,6 +223,26 @@ def inject_kk91_styles() -> None:
             border-radius: 10px !important;
             border: 1px solid var(--kk-line) !important;
         }
+
+        @media (max-width: 900px) {
+            .block-container {
+                padding-top: 1.2rem;
+                padding-bottom: 1.2rem;
+            }
+            .kk91-hero {
+                padding: 0.95rem 1rem 1rem 1rem;
+            }
+            .kk91-hero p {
+                font-size: 0.88rem;
+            }
+            .kk91-metric {
+                min-height: 84px;
+                padding: 0.62rem 0.75rem;
+            }
+            .kk91-metric__value {
+                font-size: 1.0rem;
+            }
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -567,159 +587,170 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    fig_day = px.bar(
-        totals_df,
-        x="day",
-        y="total_yield_day_wh",
-        title="Tagesertrag pro Tag (Wh)",
-        labels={"day": "Tag", "total_yield_day_wh": "Wh"},
+    tab_overview, tab_inverter, tab_snapshot, tab_data = st.tabs(
+        ["Uebersicht", "Wechselrichter", "Snapshot", "Daten"]
     )
-    style_plotly(fig_day)
-    fig_day.update_traces(marker_color=KK91_COLORS["purple"])
-    st.markdown(section_heading("Ertrag", "Tages- und Gesamtentwicklung"), unsafe_allow_html=True)
-    st.plotly_chart(fig_day, use_container_width=True)
 
-    fig_total = px.line(
-        totals_df,
-        x="day",
-        y="total_yield_total_kwh",
-        markers=True,
-        title="Gesamtertrag Verlauf (kWh)",
-        labels={"day": "Tag", "total_yield_total_kwh": "kWh"},
-    )
-    style_plotly(fig_total, accent=KK91_COLORS["turquoise"])
-    st.plotly_chart(fig_total, use_container_width=True)
+    with tab_overview:
+        fig_day = px.bar(
+            totals_df,
+            x="day",
+            y="total_yield_day_wh",
+            title="Tagesertrag pro Tag (Wh)",
+            labels={"day": "Tag", "total_yield_day_wh": "Wh"},
+        )
+        style_plotly(fig_day)
+        fig_day.update_traces(marker_color=KK91_COLORS["purple"])
+        st.markdown(section_heading("Ertrag", "Tages- und Gesamtentwicklung"), unsafe_allow_html=True)
+        st.plotly_chart(fig_day, use_container_width=True)
 
-    st.markdown(section_heading("Temperatur und Wirkungsgrad"), unsafe_allow_html=True)
-    temp_eff_cols = st.columns(2)
-    fig_temp = px.line(
-        totals_df,
-        x="day",
-        y="avg_temperature_c",
-        markers=True,
-        title="Durchschnittliche Temperatur (°C)",
-        labels={"day": "Tag", "avg_temperature_c": "°C"},
-    )
-    style_plotly(fig_temp, accent=KK91_COLORS["rose"])
-    temp_eff_cols[0].plotly_chart(fig_temp, use_container_width=True)
+        fig_total = px.line(
+            totals_df,
+            x="day",
+            y="total_yield_total_kwh",
+            markers=True,
+            title="Gesamtertrag Verlauf (kWh)",
+            labels={"day": "Tag", "total_yield_total_kwh": "kWh"},
+        )
+        style_plotly(fig_total, accent=KK91_COLORS["turquoise"])
+        st.plotly_chart(fig_total, use_container_width=True)
 
-    fig_eff = px.line(
-        totals_df,
-        x="day",
-        y="avg_efficiency_pct",
-        markers=True,
-        title="Durchschnittlicher Wirkungsgrad (%)",
-        labels={"day": "Tag", "avg_efficiency_pct": "%"},
-    )
-    style_plotly(fig_eff, accent=KK91_COLORS["blue"])
-    temp_eff_cols[1].plotly_chart(fig_eff, use_container_width=True)
+        st.markdown(section_heading("Temperatur und Wirkungsgrad"), unsafe_allow_html=True)
+        temp_eff_cols = st.columns(2)
+        fig_temp = px.line(
+            totals_df,
+            x="day",
+            y="avg_temperature_c",
+            markers=True,
+            title="Durchschnittliche Temperatur (°C)",
+            labels={"day": "Tag", "avg_temperature_c": "°C"},
+        )
+        style_plotly(fig_temp, accent=KK91_COLORS["rose"])
+        temp_eff_cols[0].plotly_chart(fig_temp, use_container_width=True)
 
-    st.markdown(section_heading("Wechselrichter-Details"), unsafe_allow_html=True)
-    if inverter_df.empty:
-        st.info("Keine Wechselrichter-Daten für den Filter gefunden.")
-    else:
-        if selected_serial is None:
-            fig_inv = px.bar(
-                inverter_df,
-                x="day",
-                y="yield_day_wh",
-                color="name",
-                barmode="group",
-                title="Tagesertrag je Wechselrichter (Wh)",
-                labels={"day": "Tag", "yield_day_wh": "Wh", "name": "Wechselrichter"},
-            )
-            style_plotly(fig_inv)
+        fig_eff = px.line(
+            totals_df,
+            x="day",
+            y="avg_efficiency_pct",
+            markers=True,
+            title="Durchschnittlicher Wirkungsgrad (%)",
+            labels={"day": "Tag", "avg_efficiency_pct": "%"},
+        )
+        style_plotly(fig_eff, accent=KK91_COLORS["blue"])
+        temp_eff_cols[1].plotly_chart(fig_eff, use_container_width=True)
+
+    with tab_inverter:
+        st.markdown(section_heading("Wechselrichter-Details"), unsafe_allow_html=True)
+        if inverter_df.empty:
+            st.info("Keine Wechselrichter-Daten für den Filter gefunden.")
         else:
-            fig_inv = px.line(
-                inverter_df,
-                x="day",
-                y="yield_day_wh",
-                markers=True,
-                title="Tagesertrag des ausgewählten Wechselrichters (Wh)",
-                labels={"day": "Tag", "yield_day_wh": "Wh"},
-            )
-            style_plotly(fig_inv, accent=KK91_COLORS["turquoise"])
-        st.plotly_chart(fig_inv, use_container_width=True)
+            if selected_serial is None:
+                fig_inv = px.bar(
+                    inverter_df,
+                    x="day",
+                    y="yield_day_wh",
+                    color="name",
+                    barmode="group",
+                    title="Tagesertrag je Wechselrichter (Wh)",
+                    labels={"day": "Tag", "yield_day_wh": "Wh", "name": "Wechselrichter"},
+                )
+                style_plotly(fig_inv)
+            else:
+                fig_inv = px.line(
+                    inverter_df,
+                    x="day",
+                    y="yield_day_wh",
+                    markers=True,
+                    title="Tagesertrag des ausgewählten Wechselrichters (Wh)",
+                    labels={"day": "Tag", "yield_day_wh": "Wh"},
+                )
+                style_plotly(fig_inv, accent=KK91_COLORS["turquoise"])
+            st.plotly_chart(fig_inv, use_container_width=True)
 
-        preview = inverter_df.sort_values("day", ascending=False).copy()
-        preview["day"] = preview["day"].dt.strftime("%Y-%m-%d")
-        st.dataframe(style_df(preview), use_container_width=True)
+            preview = inverter_df.sort_values("day", ascending=False).copy()
+            preview["day"] = preview["day"].dt.strftime("%Y-%m-%d")
+            st.dataframe(style_df(preview), use_container_width=True)
 
-    st.markdown(section_heading("String- und Phasenwerte (letzter Snapshot)"), unsafe_allow_html=True)
+    with tab_snapshot:
+        st.markdown(section_heading("String- und Phasenwerte (letzter Snapshot)"), unsafe_allow_html=True)
+        if dc_strings_df.empty and ac_phases_df.empty:
+            st.info("Noch keine DC-String/AC-Phasenwerte vorhanden. Fuehre einmal den Collector aus.")
+        else:
+            if not dc_strings_df.empty:
+                dc_strings_df = dc_strings_df.copy()
+                dc_strings_df["Wechselrichter"] = dc_strings_df["name"] + " (" + dc_strings_df["serial"] + ")"
 
-    if dc_strings_df.empty and ac_phases_df.empty:
-        st.info("Noch keine DC-String/AC-Phasenwerte vorhanden. Führe einmal den Collector aus.")
-    else:
-        if not dc_strings_df.empty:
-            dc_strings_df = dc_strings_df.copy()
-            dc_strings_df["Wechselrichter"] = dc_strings_df["name"] + " (" + dc_strings_df["serial"] + ")"
+                fig_dc = px.bar(
+                    dc_strings_df,
+                    x="label",
+                    y="power_w",
+                    color="Wechselrichter",
+                    barmode="group",
+                    title="DC String Leistung (W)",
+                    labels={"label": "String", "power_w": "W"},
+                )
+                style_plotly(fig_dc)
+                st.plotly_chart(fig_dc, use_container_width=True)
 
-            fig_dc = px.bar(
-                dc_strings_df,
-                x="label",
-                y="power_w",
-                color="Wechselrichter",
-                barmode="group",
-                title="DC String Leistung (W)",
-                labels={"label": "String", "power_w": "W"},
-            )
-            style_plotly(fig_dc)
-            st.plotly_chart(fig_dc, use_container_width=True)
+                dc_view = dc_strings_df[
+                    [
+                        "Wechselrichter",
+                        "label",
+                        "power_w",
+                        "voltage_v",
+                        "current_a",
+                        "yield_day_wh",
+                        "yield_total_kwh",
+                    ]
+                ].rename(
+                    columns={
+                        "label": "String",
+                        "power_w": "Leistung (W)",
+                        "voltage_v": "Spannung (V)",
+                        "current_a": "Strom (A)",
+                        "yield_day_wh": "Tagesertrag (Wh)",
+                        "yield_total_kwh": "Gesamtertrag (kWh)",
+                    }
+                )
+                st.dataframe(style_df(dc_view), use_container_width=True)
 
-            dc_view = dc_strings_df[
-                [
-                    "Wechselrichter",
-                    "label",
-                    "power_w",
-                    "voltage_v",
-                    "current_a",
-                    "yield_day_wh",
-                    "yield_total_kwh",
-                ]
-            ].rename(
-                columns={
-                    "label": "String",
-                    "power_w": "Leistung (W)",
-                    "voltage_v": "Spannung (V)",
-                    "current_a": "Strom (A)",
-                    "yield_day_wh": "Tagesertrag (Wh)",
-                    "yield_total_kwh": "Gesamtertrag (kWh)",
-                }
-            )
-            st.dataframe(style_df(dc_view), use_container_width=True)
+            if not ac_phases_df.empty:
+                ac_phases_df = ac_phases_df.copy()
+                ac_phases_df["Wechselrichter"] = ac_phases_df["name"] + " (" + ac_phases_df["serial"] + ")"
 
-        if not ac_phases_df.empty:
-            ac_phases_df = ac_phases_df.copy()
-            ac_phases_df["Wechselrichter"] = ac_phases_df["name"] + " (" + ac_phases_df["serial"] + ")"
+                ac_view = ac_phases_df[
+                    [
+                        "Wechselrichter",
+                        "label",
+                        "power_w",
+                        "voltage_v",
+                        "current_a",
+                        "frequency_hz",
+                        "power_factor",
+                        "reactive_power_var",
+                    ]
+                ].rename(
+                    columns={
+                        "label": "Phase",
+                        "power_w": "Leistung (W)",
+                        "voltage_v": "Spannung (V)",
+                        "current_a": "Strom (A)",
+                        "frequency_hz": "Frequenz (Hz)",
+                        "power_factor": "Leistungsfaktor",
+                        "reactive_power_var": "Blindleistung (var)",
+                    }
+                )
+                st.dataframe(style_df(ac_view), use_container_width=True)
 
-            ac_view = ac_phases_df[
-                [
-                    "Wechselrichter",
-                    "label",
-                    "power_w",
-                    "voltage_v",
-                    "current_a",
-                    "frequency_hz",
-                    "power_factor",
-                    "reactive_power_var",
-                ]
-            ].rename(
-                columns={
-                    "label": "Phase",
-                    "power_w": "Leistung (W)",
-                    "voltage_v": "Spannung (V)",
-                    "current_a": "Strom (A)",
-                    "frequency_hz": "Frequenz (Hz)",
-                    "power_factor": "Leistungsfaktor",
-                    "reactive_power_var": "Blindleistung (var)",
-                }
-            )
-            st.dataframe(style_df(ac_view), use_container_width=True)
+    with tab_data:
+        st.markdown(section_heading("Gesamtdaten"), unsafe_allow_html=True)
+        filter_host = selected_host if selected_host is not None else "Alle"
+        filter_inv = selected_inverter_label
+        st.info(f"Aktiver Filter: Host={filter_host} | Wechselrichter={filter_inv}")
 
-    table_df = totals_df.copy().sort_values("day", ascending=False)
-    table_df["day"] = table_df["day"].dt.strftime("%Y-%m-%d")
-    st.markdown(section_heading("Gesamtdaten"), unsafe_allow_html=True)
-    st.dataframe(style_df(table_df), use_container_width=True)
+        table_df = totals_df.copy().sort_values("day", ascending=False)
+        table_df["day"] = table_df["day"].dt.strftime("%Y-%m-%d")
+        st.dataframe(style_df(table_df), use_container_width=True)
 
 
 if __name__ == "__main__":
