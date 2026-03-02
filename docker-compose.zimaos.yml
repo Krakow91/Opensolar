@@ -1,0 +1,44 @@
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: opensolar:latest
+    container_name: opensolar-dashboard
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      OPENDTU_BASE_URL: ${OPENDTU_BASE_URL:-http://192.168.178.73}
+      OPENDTU_FALLBACK_URLS: ${OPENDTU_FALLBACK_URLS:-http://OpenDTU-FAE538,http://OpenDTU-FAE538.local,http://192.168.4.1}
+      OPENDTU_DB_PATH: /app/data/opendtu_stats.db
+      OPENDTU_USERNAME: ${OPENDTU_USERNAME:-}
+      OPENDTU_PASSWORD: ${OPENDTU_PASSWORD:-}
+      OPENDTU_VERIFY_TLS: ${OPENDTU_VERIFY_TLS:-true}
+      OPENDTU_TIMEOUT: ${OPENDTU_TIMEOUT:-15}
+    volumes:
+      - opensolar_data:/app/data
+    ports:
+      - "8501:8501"
+
+  collector:
+    image: opensolar:latest
+    container_name: opensolar-collector
+    restart: unless-stopped
+    depends_on:
+      - dashboard
+    command: ["/app/docker/collector-loop.sh"]
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      OPENDTU_BASE_URL: ${OPENDTU_BASE_URL:-http://192.168.178.73}
+      OPENDTU_FALLBACK_URLS: ${OPENDTU_FALLBACK_URLS:-http://OpenDTU-FAE538,http://OpenDTU-FAE538.local,http://192.168.4.1}
+      OPENDTU_DB_PATH: /app/data/opendtu_stats.db
+      OPENDTU_USERNAME: ${OPENDTU_USERNAME:-}
+      OPENDTU_PASSWORD: ${OPENDTU_PASSWORD:-}
+      OPENDTU_VERIFY_TLS: ${OPENDTU_VERIFY_TLS:-true}
+      OPENDTU_TIMEOUT: ${OPENDTU_TIMEOUT:-15}
+      COLLECT_INTERVAL_SECONDS: ${COLLECT_INTERVAL_SECONDS:-3600}
+    volumes:
+      - opensolar_data:/app/data
+
+volumes:
+  opensolar_data:

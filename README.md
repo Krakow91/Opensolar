@@ -26,7 +26,7 @@ Erfasste Kennzahlen:
 
 - Python 3.10+ (empfohlen)
 - openDTU im Netzwerk erreichbar
-- Betriebssystem: macOS oder Linux
+- Betriebssystem: macOS, Linux oder ZimaOS (Docker-basiert)
 
 ## Schnellstart (5 Minuten)
 
@@ -63,6 +63,63 @@ streamlit run dashboard.py
 ```
 
 5. Im Browser öffnen: `http://localhost:8501`
+
+## Installation auf ZimaOS (empfohlen)
+
+ZimaOS läuft Docker-basiert. Für dieses Projekt ist der schnellste Weg: per SSH klonen und per Docker Compose starten.
+
+1. SSH in dein ZimaOS-System:
+
+```bash
+ssh <user>@<zimaos-ip>
+```
+
+2. Repository klonen und in den Ordner wechseln:
+
+```bash
+git clone https://github.com/Krakow91/Opensolar.git
+cd Opensolar
+```
+
+3. Konfiguration anlegen:
+
+```bash
+cp .env.example .env
+```
+
+4. `.env` bearbeiten (mindestens `OPENDTU_BASE_URL` anpassen):
+
+```bash
+nano .env
+```
+
+5. Container starten:
+
+```bash
+docker compose -f docker-compose.zimaos.yml up -d --build
+```
+
+6. Status prüfen:
+
+```bash
+docker compose -f docker-compose.zimaos.yml ps
+docker compose -f docker-compose.zimaos.yml logs -f collector
+docker compose -f docker-compose.zimaos.yml logs -f dashboard
+```
+
+7. Dashboard öffnen:
+
+```text
+http://<zimaos-ip>:8501
+```
+
+### Update auf ZimaOS
+
+```bash
+cd Opensolar
+git pull
+docker compose -f docker-compose.zimaos.yml up -d --build
+```
 
 ## Manuelle Nutzung
 
@@ -161,6 +218,7 @@ sudo loginctl enable-linger "$USER"
 - Dashboard: `data/dashboard.log`, `data/dashboard-error.log`
 - Catch-up: `data/catchup.log`, `data/catchup-error.log`
 - Cron-Sammeln: `data/collector.log`
+- Docker/ZimaOS: `docker compose -f docker-compose.zimaos.yml logs -f`
 
 Live-Ansicht:
 
