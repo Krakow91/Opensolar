@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import os
 import sqlite3
 from pathlib import Path
@@ -11,7 +12,219 @@ import streamlit as st
 from opendtu_stats.db import init_db
 
 
-st.set_page_config(page_title="openDTU Statistik", layout="wide")
+st.set_page_config(page_title="openDTU Statistik | KK91", page_icon="⚡", layout="wide")
+
+
+KK91_COLORS = {
+    "midnight": "#0C0B1E",
+    "panes": "#1A172F",
+    "tooltip": "#222037",
+    "purple": "#6F4CFF",
+    "blue": "#4C66FF",
+    "turquoise": "#66D8FF",
+    "white": "#FFFFFF",
+    "text_dim": "#AFAEC2",
+    "line": "#2E2A48",
+    "rose": "#ED4A6D",
+}
+
+
+def inject_kk91_styles() -> None:
+    st.markdown(
+        """
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+
+        :root {
+            --kk-midnight: #0C0B1E;
+            --kk-panes: #1A172F;
+            --kk-tooltip: #222037;
+            --kk-purple: #6F4CFF;
+            --kk-blue: #4C66FF;
+            --kk-turquoise: #66D8FF;
+            --kk-white: #FFFFFF;
+            --kk-dim: #AFAEC2;
+            --kk-line: #2E2A48;
+            --kk-rose: #ED4A6D;
+        }
+
+        html, body, [class*="css"] {
+            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        }
+
+        .stApp {
+            background:
+              radial-gradient(1200px 500px at -10% -10%, rgba(111, 76, 255, 0.20), transparent 60%),
+              radial-gradient(900px 400px at 110% 0%, rgba(102, 216, 255, 0.14), transparent 60%),
+              linear-gradient(165deg, #0B0A1A 0%, #0C0B1E 40%, #121029 100%);
+            color: var(--kk-white);
+        }
+
+        .block-container {
+            padding-top: 2.2rem;
+            padding-bottom: 2.2rem;
+            max-width: 1250px;
+        }
+
+        [data-testid="stSidebar"] {
+            background: linear-gradient(180deg, rgba(26,23,47,0.97), rgba(19,17,36,0.97));
+            border-right: 1px solid var(--kk-line);
+        }
+
+        [data-testid="stSidebar"] * {
+            color: var(--kk-white) !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stTextInput"] input,
+        [data-testid="stSidebar"] [data-baseweb="select"] > div {
+            background: var(--kk-tooltip) !important;
+            border: 1px solid var(--kk-line) !important;
+            border-radius: 12px !important;
+        }
+
+        [data-testid="stSidebar"] [data-baseweb="select"] svg {
+            fill: var(--kk-turquoise);
+        }
+
+        .kk91-hero {
+            background: linear-gradient(145deg, rgba(26,23,47,0.94), rgba(34,32,55,0.94));
+            border: 1px solid var(--kk-line);
+            border-radius: 18px;
+            padding: 1.25rem 1.4rem 1.35rem 1.4rem;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.30);
+            margin-bottom: 0.9rem;
+        }
+
+        .kk91-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--kk-turquoise);
+            background: rgba(76,102,255,0.20);
+            border: 1px solid rgba(102,216,255,0.35);
+            border-radius: 999px;
+            padding: 0.28rem 0.62rem;
+            margin-bottom: 0.7rem;
+        }
+
+        .kk91-hero h1 {
+            margin: 0;
+            color: var(--kk-white);
+            font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .kk91-hero p {
+            margin: 0.45rem 0 0 0;
+            color: var(--kk-dim);
+            font-size: 0.97rem;
+            line-height: 1.45;
+            max-width: 66ch;
+        }
+
+        .kk91-side-title {
+            color: var(--kk-turquoise);
+            font-size: 0.82rem;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin: 0.1rem 0 0.55rem 0;
+        }
+
+        .kk91-side-subtitle {
+            color: var(--kk-dim);
+            font-size: 0.82rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .kk91-metric {
+            border: 1px solid var(--kk-line);
+            background: linear-gradient(160deg, rgba(26,23,47,0.96), rgba(34,32,55,0.94));
+            border-radius: 16px;
+            padding: 0.78rem 0.95rem 0.84rem 0.95rem;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+            min-height: 105px;
+        }
+
+        .kk91-metric__label {
+            color: var(--kk-dim);
+            font-size: 0.82rem;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.36rem;
+        }
+
+        .kk91-metric__value {
+            color: var(--kk-white);
+            font-family: "JetBrains Mono", "Consolas", monospace;
+            font-size: 1.18rem;
+            font-weight: 600;
+            line-height: 1.25;
+            margin-bottom: 0.24rem;
+            word-break: break-word;
+        }
+
+        .kk91-metric__meta {
+            color: var(--kk-turquoise);
+            font-size: 0.72rem;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            opacity: 0.92;
+        }
+
+        .kk91-status {
+            margin: 0.75rem 0 0.55rem;
+            border: 1px solid var(--kk-line);
+            border-left: 4px solid var(--kk-blue);
+            background: rgba(26,23,47,0.84);
+            border-radius: 12px;
+            padding: 0.6rem 0.82rem;
+            color: var(--kk-dim);
+            font-size: 0.88rem;
+        }
+
+        .kk91-status strong {
+            color: var(--kk-white);
+            font-weight: 600;
+        }
+
+        .kk91-section {
+            margin: 1.2rem 0 0.42rem;
+            border-left: 4px solid var(--kk-purple);
+            padding-left: 0.58rem;
+        }
+
+        .kk91-section h3 {
+            margin: 0;
+            color: var(--kk-white);
+            font-size: 1.05rem;
+            letter-spacing: 0.01em;
+        }
+
+        .kk91-section p {
+            margin: 0.14rem 0 0 0;
+            color: var(--kk-dim);
+            font-size: 0.82rem;
+        }
+
+        [data-testid="stPlotlyChart"],
+        [data-testid="stDataFrame"] {
+            background: linear-gradient(160deg, rgba(26,23,47,0.95), rgba(34,32,55,0.90));
+            border: 1px solid var(--kk-line);
+            border-radius: 14px;
+            padding: 0.55rem;
+        }
+
+        .stAlert {
+            border-radius: 12px !important;
+            border: 1px solid var(--kk-line) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 @st.cache_resource
@@ -171,11 +384,98 @@ def _fmt(value: float | int | None, digits: int = 1) -> str:
     return f"{float(value):.{digits}f}"
 
 
+def section_heading(title: str, subtitle: str | None = None) -> str:
+    subtitle_html = f"<p>{html.escape(subtitle)}</p>" if subtitle else ""
+    return f"""
+    <div class="kk91-section">
+      <h3>{html.escape(title)}</h3>
+      {subtitle_html}
+    </div>
+    """
+
+
+def metric_card(label: str, value: str, meta: str) -> str:
+    return f"""
+    <div class="kk91-metric">
+      <div class="kk91-metric__label">{html.escape(label)}</div>
+      <div class="kk91-metric__value">{html.escape(value)}</div>
+      <div class="kk91-metric__meta">{html.escape(meta)}</div>
+    </div>
+    """
+
+
+def style_plotly(fig, accent: str | None = None) -> None:
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Space Grotesk, Segoe UI, sans-serif", "color": KK91_COLORS["white"], "size": 13},
+        margin={"l": 8, "r": 8, "t": 42, "b": 8},
+        legend={
+            "bgcolor": "rgba(12,11,30,0.35)",
+            "bordercolor": KK91_COLORS["line"],
+            "borderwidth": 1,
+            "font": {"color": KK91_COLORS["text_dim"]},
+        },
+        title={"font": {"size": 18, "color": KK91_COLORS["white"]}},
+        colorway=[
+            KK91_COLORS["turquoise"],
+            KK91_COLORS["purple"],
+            KK91_COLORS["blue"],
+            KK91_COLORS["rose"],
+        ],
+    )
+
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor=KK91_COLORS["line"],
+        linecolor=KK91_COLORS["line"],
+        tickfont={"color": KK91_COLORS["text_dim"]},
+        title_font={"color": KK91_COLORS["text_dim"]},
+        zeroline=False,
+    )
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor=KK91_COLORS["line"],
+        linecolor=KK91_COLORS["line"],
+        tickfont={"color": KK91_COLORS["text_dim"]},
+        title_font={"color": KK91_COLORS["text_dim"]},
+        zeroline=False,
+    )
+
+    if accent:
+        for trace in fig.data:
+            if hasattr(trace, "line"):
+                trace.line.color = accent
+                trace.line.width = 3
+            if hasattr(trace, "marker"):
+                trace.marker.color = accent
+                if hasattr(trace.marker, "line"):
+                    trace.marker.line.color = KK91_COLORS["blue"]
+                    trace.marker.line.width = 1
+
+
 def main() -> None:
-    st.title("openDTU Tagesstatistik")
+    inject_kk91_styles()
+
+    st.markdown(
+        """
+        <div class="kk91-hero">
+          <div class="kk91-badge">KK91 Energy Console</div>
+          <h1>openDTU Tagesstatistik</h1>
+          <p>Live-Leistung, Tagesertrag und Wechselrichter-Details in einer Oberfläche im KK91-Look.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     default_db = os.getenv("OPENDTU_DB_PATH", "data/opendtu_stats.db")
-    db_path = st.sidebar.text_input("SQLite-Datei", value=default_db)
+    with st.sidebar:
+        st.markdown('<div class="kk91-side-title">Control Deck</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="kk91-side-subtitle">Filtere Host und Wechselrichter für die aktuelle Ansicht.</div>',
+            unsafe_allow_html=True,
+        )
+        db_path = st.text_input("SQLite-Datei", value=default_db)
     db_file = Path(db_path)
 
     if not db_file.exists():
@@ -193,16 +493,10 @@ def main() -> None:
     selected_host = None if selected_host_text == "Alle" else selected_host_text
 
     inverter_options_df = query_inverter_options(conn, selected_host)
-    inverter_labels = ["Alle"] + [f"{row['name']} ({row['serial']})" for _, row in inverter_options_df.iterrows()]
+    inverter_map = {f"{row['name']} ({row['serial']})": row["serial"] for _, row in inverter_options_df.iterrows()}
+    inverter_labels = ["Alle"] + list(inverter_map.keys())
     selected_inverter_label = st.sidebar.selectbox("Wechselrichter", inverter_labels, index=0)
-
-    selected_serial = None
-    if selected_inverter_label != "Alle":
-        for _, row in inverter_options_df.iterrows():
-            label = f"{row['name']} ({row['serial']})"
-            if label == selected_inverter_label:
-                selected_serial = row["serial"]
-                break
+    selected_serial = None if selected_inverter_label == "Alle" else inverter_map.get(selected_inverter_label)
 
     totals_df = query_daily_totals(conn, selected_host)
     inverter_df = query_daily_inverter_stats(conn, selected_host, selected_serial)
@@ -214,18 +508,30 @@ def main() -> None:
         return
 
     totals_df["day"] = pd.to_datetime(totals_df["day"])
+    totals_df = totals_df.sort_values("day")
     if not inverter_df.empty:
         inverter_df["day"] = pd.to_datetime(inverter_df["day"])
+        inverter_df = inverter_df.sort_values("day")
 
     latest = totals_df.iloc[-1]
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Tagesertrag", f"{_fmt(latest['total_yield_day_wh'], 1)} Wh")
-    c2.metric("Gesamtertrag", f"{_fmt(latest['total_yield_total_kwh'], 3)} kWh")
-    c3.metric("DC-Leistung", f"{_fmt(latest['dc_power_w'], 1)} W")
-    c4.metric("Wirkungsgrad", f"{_fmt(latest['avg_efficiency_pct'], 2)} %")
+    metric_data = [
+        ("Tagesertrag", f"{_fmt(latest['total_yield_day_wh'], 1)} Wh", "YieldDay"),
+        ("Gesamtertrag", f"{_fmt(latest['total_yield_total_kwh'], 3)} kWh", "YieldTotal"),
+        ("DC-Leistung", f"{_fmt(latest['dc_power_w'], 1)} W", "DC Power"),
+        ("Wirkungsgrad", f"{_fmt(latest['avg_efficiency_pct'], 2)} %", "Efficiency"),
+    ]
+    metric_cols = st.columns(4)
+    for col, (label, value, meta) in zip(metric_cols, metric_data):
+        with col:
+            st.markdown(metric_card(label, value, meta), unsafe_allow_html=True)
 
-    st.caption(f"Letzter Snapshot: {latest['collected_at']} | Host: {latest['dtu_host']}")
+    latest_collected = html.escape(str(latest["collected_at"]))
+    latest_host = html.escape(str(latest["dtu_host"]))
+    st.markdown(
+        f'<div class="kk91-status">Letzter Snapshot: <strong>{latest_collected}</strong> | Host: <strong>{latest_host}</strong></div>',
+        unsafe_allow_html=True,
+    )
 
     fig_day = px.bar(
         totals_df,
@@ -234,6 +540,9 @@ def main() -> None:
         title="Tagesertrag pro Tag (Wh)",
         labels={"day": "Tag", "total_yield_day_wh": "Wh"},
     )
+    style_plotly(fig_day)
+    fig_day.update_traces(marker_color=KK91_COLORS["purple"])
+    st.markdown(section_heading("Ertrag", "Tages- und Gesamtentwicklung"), unsafe_allow_html=True)
     st.plotly_chart(fig_day, use_container_width=True)
 
     fig_total = px.line(
@@ -244,8 +553,10 @@ def main() -> None:
         title="Gesamtertrag Verlauf (kWh)",
         labels={"day": "Tag", "total_yield_total_kwh": "kWh"},
     )
+    style_plotly(fig_total, accent=KK91_COLORS["turquoise"])
     st.plotly_chart(fig_total, use_container_width=True)
 
+    st.markdown(section_heading("Temperatur und Wirkungsgrad"), unsafe_allow_html=True)
     temp_eff_cols = st.columns(2)
     fig_temp = px.line(
         totals_df,
@@ -255,6 +566,7 @@ def main() -> None:
         title="Durchschnittliche Temperatur (°C)",
         labels={"day": "Tag", "avg_temperature_c": "°C"},
     )
+    style_plotly(fig_temp, accent=KK91_COLORS["rose"])
     temp_eff_cols[0].plotly_chart(fig_temp, use_container_width=True)
 
     fig_eff = px.line(
@@ -265,9 +577,10 @@ def main() -> None:
         title="Durchschnittlicher Wirkungsgrad (%)",
         labels={"day": "Tag", "avg_efficiency_pct": "%"},
     )
+    style_plotly(fig_eff, accent=KK91_COLORS["blue"])
     temp_eff_cols[1].plotly_chart(fig_eff, use_container_width=True)
 
-    st.subheader("Wechselrichter-Details")
+    st.markdown(section_heading("Wechselrichter-Details"), unsafe_allow_html=True)
     if inverter_df.empty:
         st.info("Keine Wechselrichter-Daten für den Filter gefunden.")
     else:
@@ -281,6 +594,7 @@ def main() -> None:
                 title="Tagesertrag je Wechselrichter (Wh)",
                 labels={"day": "Tag", "yield_day_wh": "Wh", "name": "Wechselrichter"},
             )
+            style_plotly(fig_inv)
         else:
             fig_inv = px.line(
                 inverter_df,
@@ -290,13 +604,14 @@ def main() -> None:
                 title="Tagesertrag des ausgewählten Wechselrichters (Wh)",
                 labels={"day": "Tag", "yield_day_wh": "Wh"},
             )
+            style_plotly(fig_inv, accent=KK91_COLORS["turquoise"])
         st.plotly_chart(fig_inv, use_container_width=True)
 
         preview = inverter_df.sort_values("day", ascending=False).copy()
         preview["day"] = preview["day"].dt.strftime("%Y-%m-%d")
         st.dataframe(preview, use_container_width=True)
 
-    st.subheader("String- und Phasenwerte (letzter Snapshot)")
+    st.markdown(section_heading("String- und Phasenwerte (letzter Snapshot)"), unsafe_allow_html=True)
 
     if dc_strings_df.empty and ac_phases_df.empty:
         st.info("Noch keine DC-String/AC-Phasenwerte vorhanden. Führe einmal den Collector aus.")
@@ -314,6 +629,7 @@ def main() -> None:
                 title="DC String Leistung (W)",
                 labels={"label": "String", "power_w": "W"},
             )
+            style_plotly(fig_dc)
             st.plotly_chart(fig_dc, use_container_width=True)
 
             dc_view = dc_strings_df[
@@ -368,7 +684,7 @@ def main() -> None:
 
     table_df = totals_df.copy().sort_values("day", ascending=False)
     table_df["day"] = table_df["day"].dt.strftime("%Y-%m-%d")
-    st.subheader("Gesamtdaten")
+    st.markdown(section_heading("Gesamtdaten"), unsafe_allow_html=True)
     st.dataframe(table_df, use_container_width=True)
 
 
