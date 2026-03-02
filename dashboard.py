@@ -12,7 +12,7 @@ import streamlit as st
 from opendtu_stats.db import init_db
 
 
-st.set_page_config(page_title="openDTU Statistik | KK91", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="openDTU Energy Console", page_icon="⚡", layout="wide")
 
 
 KK91_COLORS = {
@@ -59,6 +59,14 @@ def inject_kk91_styles() -> None:
 
         header[data-testid="stHeader"] {
             display: none;
+        }
+
+        [data-testid="stToolbar"] {
+            display: none !important;
+        }
+
+        #MainMenu {
+            visibility: hidden;
         }
 
         [data-testid="stAppViewContainer"] > .main {
@@ -430,6 +438,15 @@ def _fmt(value: float | int | None, digits: int = 1) -> str:
     return f"{float(value):.{digits}f}"
 
 
+def _yes_no(value: object) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "-"
+    try:
+        return "Ja" if int(value) == 1 else "Nein"
+    except (TypeError, ValueError):
+        return "-"
+
+
 def section_heading(title: str, subtitle: str | None = None) -> str:
     subtitle_html = f"<p>{html.escape(subtitle)}</p>" if subtitle else ""
     return f"""
@@ -565,14 +582,19 @@ def main() -> None:
     init_db(str(db_file))
     conn = open_connection(str(db_file))
 
-    hosts_df = pd.read_sql_query("SELECT DISTINCT dtu_host FROM runs ORDER BY dtu_host", conn)
-    host_options = ["Alle"] + hosts_df["dtu_host"].tolist()
-    selected_host_text = st.sidebar.selectbox("openDTU Host", host_options, index=0)
-    selected_host = None if selected_host_text == "Alle" else selected_host_text
+    try:
+        hosts_df = pd.read_sql_query("SELECT DISTINCT dtu_host FROM runs ORDER BY dtu_host", conn)
+        host_options = ["Alle"] + hosts_df["dtu_host"].tolist()
+        selected_host_text = st.sidebar.selectbox("openDTU Host", host_options, index=0)
+        selected_host = None if selected_host_text == "Alle" else selected_host_text
 
-    totals_df = query_daily_totals(conn, selected_host)
-    inverter_daily_all_df = query_daily_inverter_stats(conn, selected_host, None)
-    latest_inverters_df = query_latest_inverters(conn, selected_host)
+        totals_df = query_daily_totals(conn, selected_host)
+        inverter_daily_all_df = query_daily_inverter_stats(conn, selected_host, None)
+        latest_inverters_df = query_latest_inverters(conn, selected_host)
+    except Exception as exc:
+        st.error("Fehler beim Laden der Daten aus SQLite.")
+        st.code(str(exc))
+        return
 
     if totals_df.empty:
         st.warning("Keine Daten in der Datenbank vorhanden.")
@@ -585,6 +607,14 @@ def main() -> None:
         inverter_daily_all_df = inverter_daily_all_df.sort_values("day")
 
     latest = totals_df.iloc[-1]
+    latest_ts = pd.to_datetime(latest["collected_at"], errors="coerce")
+    if not pd.isna(latest_ts):
+        age_hours = (pd.Timestamp.now(tz=latest_ts.tz) - latest_ts).total_seconds() / 3600.0
+        if age_hours > 24:
+            st.warning(
+                "Die letzten Daten sind älter als 24h "
+                f"({age_hours:.1f}h). Prüfe Collector/Verbindung zur openDTU."
+            )
 
     metric_data = [
         ("AC-Leistung", f"{_fmt(latest['total_power_w'], 1)} W", "Power"),
@@ -700,8 +730,8 @@ def main() -> None:
             st.info("Keine Wechselrichter-Daten vorhanden.")
         else:
             latest_view = latest_inverters_df.copy()
-            latest_view["reachable"] = latest_view["reachable"].map({1: "Ja", 0: "Nein"}).fillna("-")
-            latest_view["producing"] = latest_view["producing"].map({1: "Ja", 0: "Nein"}).fillna("-")
+            latest_view["reachable"] = latest_view["reachable"].apply(_yes_no)
+            latest_view["producing"] = latest_view["producing"].apply(_yes_no)
             latest_view = latest_view.rename(
                 columns={
                     "serial": "Serial",
@@ -778,12 +808,8 @@ def main() -> None:
                 single_latest = None
 
             if single_latest is not None:
-                reachable_text = "-"
-                producing_text = "-"
-                if "reachable" in single_latest and not pd.isna(single_latest["reachable"]):
-                    reachable_text = "Ja" if int(single_latest["reachable"]) == 1 else "Nein"
-                if "producing" in single_latest and not pd.isna(single_latest["producing"]):
-                    producing_text = "Ja" if int(single_latest["producing"]) == 1 else "Nein"
+                reachable_text = _yes_no(single_latest.get("reachable"))
+                producing_text = _yes_no(single_latest.get("producing"))
 
                 single_metrics = [
                     ("AC-Leistung", f"{_fmt(single_latest.get('ac_power_w'), 1)} W", "Power"),

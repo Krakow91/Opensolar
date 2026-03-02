@@ -175,6 +175,14 @@ Danach findest du in Home Assistant u. a.:
 - Temperatur/Wirkungsgrad
 - Wechselrichter-spezifische Sensoren
 
+## Qualitätscheck lokal
+
+```bash
+cd Opensolar
+python -m py_compile dashboard.py collect.py ha_bridge.py opendtu_stats/*.py
+python -m unittest discover -s tests -v
+```
+
 ## Manuelle Nutzung
 
 Collector manuell ausführen:

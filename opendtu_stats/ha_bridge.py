@@ -19,7 +19,8 @@ def _env_bool(name: str, default: bool) -> bool:
 
 
 def _slug(value: str) -> str:
-    return "".join(ch.lower() if ch.isalnum() else "_" for ch in value).strip("_")
+    slug = "".join(ch.lower() if ch.isalnum() else "_" for ch in value).strip("_")
+    return slug or "opensolar"
 
 
 def _to_number(value: Any) -> float | int | None:
@@ -155,7 +156,7 @@ def _publish_sensor_discovery(
     if icon:
         payload["icon"] = icon
 
-    client.publish(topic, json.dumps(payload, ensure_ascii=False), retain=True)
+    client.publish(topic, json.dumps(payload, ensure_ascii=False), qos=1, retain=True)
 
 
 def _publish_base_discovery(
@@ -353,21 +354,29 @@ def main() -> int:
     state_topic = f"{args.mqtt_base_topic}/state"
     node_id = _slug(args.device_name or "opensolar_opendtu")
 
-    client = mqtt.Client(client_id=args.mqtt_client_id, protocol=mqtt.MQTTv311)
+    client = mqtt.Client(
+        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+        client_id=args.mqtt_client_id,
+        protocol=mqtt.MQTTv311,
+    )
     if args.mqtt_username:
         client.username_pw_set(args.mqtt_username, args.mqtt_password or None)
     if args.mqtt_use_tls:
         client.tls_set()
 
-    client.will_set(availability_topic, payload="offline", retain=True)
-    client.connect(args.mqtt_host, args.mqtt_port, keepalive=60)
+    client.will_set(availability_topic, payload="offline", qos=1, retain=True)
+    try:
+        client.connect(args.mqtt_host, args.mqtt_port, keepalive=60)
+    except Exception as exc:
+        print(f"Fehler: MQTT-Verbindung fehlgeschlagen ({args.mqtt_host}:{args.mqtt_port}): {exc}")
+        return 2
     client.loop_start()
 
     discovered_inverters: set[str] = set()
     discovery_sent = False
 
     try:
-        client.publish(availability_topic, "online", retain=True)
+        client.publish(availability_topic, "online", qos=1, retain=True)
         print(f"[ha-bridge] Connected to MQTT broker {args.mqtt_host}:{args.mqtt_port}")
 
         while True:
@@ -405,11 +414,11 @@ def main() -> int:
                 )
                 discovered_inverters.add(serial)
 
-            client.publish(state_topic, json.dumps(snapshot, ensure_ascii=False), retain=True)
+            client.publish(state_topic, json.dumps(snapshot, ensure_ascii=False), qos=1, retain=True)
             for inverter in inverters:
                 serial_slug = _slug(str(inverter["serial"]))
                 inv_topic = f"{args.mqtt_base_topic}/inverter/{serial_slug}/state"
-                client.publish(inv_topic, json.dumps(inverter, ensure_ascii=False), retain=True)
+                client.publish(inv_topic, json.dumps(inverter, ensure_ascii=False), qos=1, retain=True)
 
             print(
                 f"[ha-bridge] Published snapshot from {snapshot.get('collected_at')} "
@@ -420,7 +429,7 @@ def main() -> int:
         print("[ha-bridge] Stop requested")
     finally:
         try:
-            client.publish(availability_topic, "offline", retain=True)
+            client.publish(availability_topic, "offline", qos=1, retain=True)
             client.loop_stop()
             client.disconnect()
         except Exception:
